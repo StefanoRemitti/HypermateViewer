@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval, switchMap, catchError, of, startWith, combineLatest } from 'rxjs';
+import { Subject, merge, interval, switchMap, catchError, of, combineLatest } from 'rxjs';
 
 import { FiringService } from '../../core/services/firing.service';
 import { LineInfo } from '../../core/models/line-info.model';
@@ -33,6 +33,9 @@ const COUNTER_POLL_MS = 10_000;
 export class FiringDashboardComponent implements OnInit {
   private readonly firingService = inject(FiringService);
   private readonly destroyRef    = inject(DestroyRef);
+
+  private readonly refreshTrigger$        = new Subject<void>();
+  private readonly counterRefreshTrigger$ = new Subject<void>();
 
   lines           = signal<LineInfo[]>([]);
   selectedLine    = signal<LineInfo | null>(null);
@@ -71,6 +74,7 @@ export class FiringDashboardComponent implements OnInit {
       if (lines.length > 0) {
         this.selectedLine.set(lines[0]);
         this.startPolling();
+        this.refreshTrigger$.next();
       }
     });
   }
@@ -84,12 +88,12 @@ export class FiringDashboardComponent implements OnInit {
     this.entryLive.set(null);
     this.exitCounters.set(null);
     this.exitLive.set(null);
+    this.refreshTrigger$.next();
   }
 
   private startPolling(): void {
-    // Status polling (every 5s)
-    interval(STATUS_POLL_MS).pipe(
-      startWith(0),
+    // Status polling: immediate trigger + every 5s
+    merge(this.refreshTrigger$, interval(STATUS_POLL_MS)).pipe(
       switchMap(() => {
         const line = this.selectedLine();
         if (!line) return of(null);
@@ -107,11 +111,12 @@ export class FiringDashboardComponent implements OnInit {
       this.entryOrder.set(entry);
       this.exitOrder.set(exit);
       this.lastUpdated.set(new Date());
+      // After step data arrives, immediately trigger counter refresh
+      this.counterRefreshTrigger$.next();
     });
 
-    // Counters polling (every 10s)
-    interval(COUNTER_POLL_MS).pipe(
-      startWith(0),
+    // Counters polling: triggered after step fetch + every 10s
+    merge(this.counterRefreshTrigger$, interval(COUNTER_POLL_MS)).pipe(
       switchMap(() => {
         const line   = this.selectedLine();
         const called = this.calledOrder();
