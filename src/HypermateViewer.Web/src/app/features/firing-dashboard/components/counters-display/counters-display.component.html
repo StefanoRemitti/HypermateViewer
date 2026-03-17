@@ -1,0 +1,19 @@
+<div class="counters-block">
+  <h4 class="counters-label">{{ label() }}</h4>
+  @if (counter(); as c) {
+    <div class="counter-row">
+      <span class="counter-icon">🧱</span>
+      <span class="counter-value">{{ c.pieces | number:'1.0-0' }} pz</span>
+    </div>
+    <div class="counter-row">
+      <span class="counter-icon">📐</span>
+      <span class="counter-value">{{ c.m2 || '0' }} m²</span>
+    </div>
+    <div class="counter-row">
+      <span class="counter-icon">⏱</span>
+      <span class="counter-time">{{ c.lastPiece | slice:11:19 }}</span>
+    </div>
+  } @else {
+    <div class="counter-empty">Nessun dato</div>
+  }
+</div>

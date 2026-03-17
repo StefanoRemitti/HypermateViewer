@@ -1,0 +1,10 @@
+<div class="line-selector">
+  @for (line of lines(); track line.id) {
+    <button
+      class="line-btn"
+      [class.active]="line.id === selectedLine().id"
+      (click)="selectLine(line)">
+      {{ line.displayName }}
+    </button>
+  }
+</div>

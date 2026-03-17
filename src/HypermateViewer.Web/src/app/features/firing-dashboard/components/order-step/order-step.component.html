@@ -1,0 +1,29 @@
+<div class="step-card" [ngClass]="status()">
+  <div class="step-header">
+    <span class="step-title">{{ stepLabel }}</span>
+    <span class="status-dot" [ngClass]="status()"></span>
+  </div>
+  <div class="status-label" [ngClass]="status()">{{ statusLabel }}</div>
+
+  <div class="order-info">
+    <div class="order-row">
+      <span class="order-icon">📋</span>
+      <span class="order-code">{{ orderCode }}</span>
+    </div>
+    @if (stepType() !== 'called') {
+      <div class="order-row small">
+        <span class="label">NNNN:</span>
+        <span class="value">{{ orderNumber }}</span>
+      </div>
+    }
+    <div class="order-row small">
+      <span class="order-icon">⏱</span>
+      <span class="order-time">{{ eventTime }}</span>
+    </div>
+  </div>
+
+  @if (stepType() !== 'called') {
+    <app-counters-display label="Conteggi Ordine" [counter]="orderCounters()" />
+    <app-counters-display label="Conteggi Live" [counter]="liveCounters()" />
+  }
+</div>
