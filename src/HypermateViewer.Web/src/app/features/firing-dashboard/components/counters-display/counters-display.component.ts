@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, computed } from '@angular/core';
 import { DecimalPipe, SlicePipe } from '@angular/common';
 import { Counter } from '../../../../core/models/counter.model';
 
@@ -12,4 +12,9 @@ import { Counter } from '../../../../core/models/counter.model';
 export class CountersDisplayComponent {
   label = input.required<string>();
   counter = input<Counter | null>(null);
+
+  displayM2 = computed(() => {
+    const m2 = this.counter()?.m2;
+    return m2 && m2.trim() !== '' ? m2 : '0';
+  });
 }
