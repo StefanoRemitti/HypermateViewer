@@ -1,0 +1,31 @@
+/* Global CSS custom properties and resets */
+
+:root {
+  --color-bg:         #111317;
+  --color-header-bg:  #1a1d23;
+  --color-card-bg:    #1e2128;
+  --color-border:     #2c3040;
+  --color-text:       #e8ecf0;
+  --color-text-muted: #7a8394;
+  --color-primary:    #3b82f6;
+
+  --color-green:  #4CAF50;
+  --color-yellow: #FFC107;
+  --color-grey:   #9E9E9E;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 1.5;
+}
+

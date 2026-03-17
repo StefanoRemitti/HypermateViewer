@@ -1,0 +1,51 @@
+<div class="dashboard">
+  <header class="dashboard-header">
+    <div class="header-brand">
+      <span class="header-icon">🏭</span>
+      <span class="header-title">HYPERMATE VIEWER</span>
+      <span class="header-subtitle">Cottura</span>
+    </div>
+
+    @if (lines().length > 0 && selectedLine()) {
+      <app-line-selector
+        [lines]="lines()"
+        [selectedLine]="selectedLine()!"
+        (lineSelected)="selectLine($event)" />
+    }
+
+    <div class="header-meta">
+      @if (lastUpdated()) {
+        <span class="last-updated">
+          🔄 {{ lastUpdated() | date:'HH:mm:ss' }}
+        </span>
+      }
+    </div>
+  </header>
+
+  @if (selectedLine()) {
+    <main class="dashboard-content">
+      <div class="steps-grid">
+        <app-order-step
+          stepType="called"
+          [status]="calledOrder() ? 'green' : 'grey'"
+          [calledOrder]="calledOrder()" />
+
+        <app-order-step
+          stepType="entry"
+          [status]="entryStatus()"
+          [activeOrder]="entryOrder()"
+          [orderCounters]="entryCounters()"
+          [liveCounters]="entryLive()" />
+
+        <app-order-step
+          stepType="exit"
+          [status]="exitStatus()"
+          [activeOrder]="exitOrder()"
+          [orderCounters]="exitCounters()"
+          [liveCounters]="exitLive()" />
+      </div>
+    </main>
+  } @else {
+    <div class="loading">Caricamento linee...</div>
+  }
+</div>
