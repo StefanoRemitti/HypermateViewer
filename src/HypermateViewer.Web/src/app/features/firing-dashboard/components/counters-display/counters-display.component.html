@@ -1,19 +1,25 @@
 <div class="counters-block">
   <h4 class="counters-label">{{ label() }}</h4>
+  @if (subtitle()) {
+    <span class="counters-subtitle">{{ subtitle() }}</span>
+  }
   @if (counter(); as c) {
     <div class="counter-row">
       <span class="counter-icon">🧱</span>
-      <span class="counter-value">{{ c.pieces | number:'1.0-0' }} pz</span>
+      <span class="counter-value">{{ c.pieces | number:'1.0-0' }}</span>
+      <span class="counter-unit">pz</span>
     </div>
     <div class="counter-row">
       <span class="counter-icon">📐</span>
-      <span class="counter-value">{{ displayM2() }} m²</span>
+      <span class="counter-value">{{ displayM2() }}</span>
+      <span class="counter-unit">m²</span>
     </div>
-    <div class="counter-row">
-      <span class="counter-icon">⏱</span>
-      <span class="counter-time">{{ c.lastPiece | slice:11:19 }}</span>
-    </div>
+    @if (c.lastPiece) {
+      <div class="counter-time">
+        ⏱ {{ c.lastPiece | slice:5:19 }}
+      </div>
+    }
   } @else {
-    <div class="counter-empty">Nessun dato</div>
+    <div class="counter-empty">—</div>
   }
 </div>

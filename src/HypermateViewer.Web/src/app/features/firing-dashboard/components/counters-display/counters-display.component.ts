@@ -11,6 +11,7 @@ import { Counter } from '../../../../core/models/counter.model';
 })
 export class CountersDisplayComponent {
   label = input.required<string>();
+  subtitle = input<string>('');
   counter = input<Counter | null>(null);
 
   displayM2 = computed(() => {

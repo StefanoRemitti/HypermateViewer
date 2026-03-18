@@ -33,7 +33,10 @@
   </div>
 
   @if (stepType() !== 'called') {
-    <app-counters-display label="Conteggi Ordine" [counter]="orderCounters()" />
-    <app-counters-display label="Conteggi Live" [counter]="liveCounters()" />
+    <app-counters-display label="Conteggi Globali" [counter]="orderCounters()" />
+    <app-counters-display
+      label="Conteggi Parziali"
+      [subtitle]="liveCountersSubtitle()"
+      [counter]="liveCounters()" />
   }
 </div>
