@@ -34,9 +34,9 @@ export class OrderStepComponent {
 
   get stepLabel(): string {
     switch (this.stepType()) {
-      case 'called': return 'A. Chiamata Ordine';
-      case 'entry':  return 'B. Attivazione Ingresso';
-      case 'exit':   return 'C. Attivazione Uscita';
+      case 'called': return 'Chiamata Ordine';
+      case 'entry':  return 'Attivazione Ordine Ingresso';
+      case 'exit':   return 'Attivazione Ordine Uscita';
     }
   }
 
@@ -49,17 +49,17 @@ export class OrderStepComponent {
     if (stepType === 'called') {
       return [
         {
-          label:     'Chiamata ordine Hypermate',
-          status:    called ? 'green' : 'grey',
-          orderCode: called?.erpCode ?? '',
-          eventTime: this.formatTime(called?.eventTime)
-        },
-        {
-          label:       'Chiamata ordine AGV',
-          status:      'grey',
+          label:       'Chiamata Ordine AGV',
+          status:      'grey' as StepStatus,
           orderCode:   '',
           eventTime:   '',
           placeholder: 'In attesa connessione AGV'
+        },
+        {
+          label:     'Chiamata Ordine Hypermate',
+          status:    called ? 'green' : 'grey',
+          orderCode: called?.erpCode ?? '',
+          eventTime: this.formatTime(called?.eventTime)
         }
       ];
     }
@@ -67,13 +67,13 @@ export class OrderStepComponent {
     if (stepType === 'entry') {
       return [
         {
-          label:     'Predisposizione ordine Hypermate',
+          label:     'Ordine Hypermate Pronto',
           status:    this.matchStatus(active?.orderNumber, called?.orderNumber),
           orderCode: active?.codiceOrdine ?? '',
           eventTime: this.formatTime(active?.eventTime)
         },
         {
-          label:     'Pressione pulsante avvio conteggi',
+          label:     'Avvio Conteggi Hypermate',
           status:    this.matchStatus(activation?.orderNumber, called?.orderNumber),
           orderCode: activation?.erpCode ?? '',
           eventTime: this.formatTime(activation?.eventTime)
@@ -84,7 +84,7 @@ export class OrderStepComponent {
     // exit
     return [
       {
-        label:     'Predisposizione ordine Hypermate',
+        label:     'Avvio Conteggi Hypermate',
         status:    this.matchStatus(active?.orderNumber, called?.orderNumber),
         orderCode: active?.codiceOrdine ?? '',
         eventTime: this.formatTime(active?.eventTime)
@@ -96,12 +96,21 @@ export class OrderStepComponent {
     const stepType = this.stepType();
     const phases   = this.subPhases();
 
-    // For step A, A2 is always a placeholder and is excluded from overall status
-    const active = stepType === 'called' ? phases.slice(0, 1) : phases;
+    // For step A, A1 (AGV placeholder) is always grey and excluded from overall status
+    const active = stepType === 'called' ? phases.slice(1) : phases;
 
     if (active.every(p => p.status === 'green'))  return 'green';
     if (active.every(p => p.status === 'grey'))   return 'grey';
     return 'yellow';
+  });
+
+  liveCountersSubtitle = computed(() => {
+    const activation = this.countersActivation();
+    if (!activation?.eventTime) return '';
+    const ts = activation.eventTime;
+    const datePart = ts.slice(5, 10).replace('-', '/');
+    const timePart = ts.slice(11, 19);
+    return `A partire da ${datePart} ${timePart}`;
   });
 
   get statusLabel(): string {

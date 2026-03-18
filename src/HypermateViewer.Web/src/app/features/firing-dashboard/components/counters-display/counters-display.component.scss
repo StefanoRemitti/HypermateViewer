@@ -1,45 +1,61 @@
 .counters-block {
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
   border-top: 1px solid var(--color-border);
 }
 
 .counters-label {
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.15rem 0;
+}
+
+.counters-subtitle {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin-bottom: 0.4rem;
 }
 
 .counter-row {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.15rem;
-  font-size: 0.85rem;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
 }
 
 .counter-icon {
-  font-size: 0.85rem;
+  font-size: 1rem;
   flex-shrink: 0;
 }
 
 .counter-value {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: monospace;
   color: var(--color-text);
+  letter-spacing: 0.02em;
+}
+
+.counter-unit {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
 }
 
 .counter-time {
   font-size: 0.8rem;
   color: var(--color-text-muted);
   font-family: monospace;
+  margin-top: 0.25rem;
 }
 
 .counter-empty {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  font-style: italic;
+  font-size: 1rem;
+  color: var(--color-grey);
+  margin-top: 0.25rem;
 }

@@ -89,14 +89,14 @@
 
 /* ─── Content ─── */
 .dashboard-content {
-  padding: 1.5rem;
+  padding: 2rem;
   flex: 1;
 }
 
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+  gap: 1.5rem;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
