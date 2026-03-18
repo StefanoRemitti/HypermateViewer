@@ -9,6 +9,14 @@ import { CountersDisplayComponent } from '../counters-display/counters-display.c
 export type StepType = 'called' | 'entry' | 'exit';
 export type StepStatus = 'green' | 'yellow' | 'grey';
 
+/** Placeholder sub-phase shown when a dependency is not yet satisfied. */
+const WAITING_PLACEHOLDER: Pick<SubPhase, 'status' | 'orderCode' | 'eventTime' | 'placeholder'> = {
+  status:      'grey',
+  orderCode:   '',
+  eventTime:   '',
+  placeholder: 'In attesa dello step precedente'
+};
+
 export interface SubPhase {
   label: string;
   status: StepStatus;
@@ -31,6 +39,8 @@ export class OrderStepComponent {
   countersActivation = input<CountersActivation | null>(null);
   orderCounters      = input<Counter | null>(null);
   liveCounters       = input<Counter | null>(null);
+  /** Overall status of the preceding step; defaults to 'green' (no dependency) for step A. */
+  prevStepStatus     = input<StepStatus>('green');
 
   get stepLabel(): string {
     switch (this.stepType()) {
@@ -65,23 +75,30 @@ export class OrderStepComponent {
     }
 
     if (stepType === 'entry') {
-      return [
-        {
-          label:     'Ordine Hypermate Pronto',
-          status:    this.matchStatus(active?.orderNumber, called?.orderNumber),
-          orderCode: active?.codiceOrdine ?? '',
-          eventTime: this.formatTime(active?.eventTime)
-        },
-        {
-          label:     'Avvio Conteggi Hypermate',
-          status:    this.matchStatus(activation?.orderNumber, called?.orderNumber),
-          orderCode: activation?.erpCode ?? '',
-          eventTime: this.formatTime(activation?.eventTime)
-        }
-      ];
+      const b1Status = this.matchStatus(active?.orderNumber, called?.orderNumber);
+      const b1: SubPhase = {
+        label:     'Ordine Hypermate Pronto',
+        status:    b1Status,
+        orderCode: active?.codiceOrdine ?? '',
+        eventTime: this.formatTime(active?.eventTime)
+      };
+      // B2 depends on B1: only show real data when B1 is green
+      const b2: SubPhase = b1Status === 'green'
+        ? {
+            label:     'Avvio Conteggi Hypermate',
+            status:    this.matchStatus(activation?.orderNumber, called?.orderNumber),
+            orderCode: activation?.erpCode ?? '',
+            eventTime: this.formatTime(activation?.eventTime)
+          }
+        : { label: 'Avvio Conteggi Hypermate', ...WAITING_PLACEHOLDER };
+      return [b1, b2];
     }
 
-    // exit
+    // exit — C1 depends on entry step (B) overall status
+    const prevStatus = this.prevStepStatus();
+    if (prevStatus !== 'green') {
+      return [{ label: 'Avvio Conteggi Hypermate', ...WAITING_PLACEHOLDER }];
+    }
     return [
       {
         label:     'Avvio Conteggi Hypermate',
