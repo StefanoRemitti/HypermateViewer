@@ -29,27 +29,34 @@
 
   @if (selectedLine()) {
     <main class="dashboard-content">
-      <div class="steps-grid">
-        <app-order-step
-          stepType="called"
-          [calledOrder]="calledOrder()" />
+      @if (loading()) {
+        <div class="loading-overlay">
+          <div class="spinner"></div>
+          <p class="loading-text">Caricamento dati...</p>
+        </div>
+      } @else {
+        <div class="steps-grid steps-grid--loaded">
+          <app-order-step
+            stepType="called"
+            [calledOrder]="calledOrder()" />
 
-        <app-order-step
-          stepType="entry"
-          [calledOrder]="calledOrder()"
-          [activeOrder]="entryOrder()"
-          [countersActivation]="countersActivation()"
-          [orderCounters]="entryCounters()"
-          [liveCounters]="entryLive()" />
+          <app-order-step
+            stepType="entry"
+            [calledOrder]="calledOrder()"
+            [activeOrder]="entryOrder()"
+            [countersActivation]="countersActivation()"
+            [orderCounters]="entryCounters()"
+            [liveCounters]="entryLive()" />
 
-        <app-order-step
-          stepType="exit"
-          [calledOrder]="calledOrder()"
-          [activeOrder]="exitOrder()"
-          [orderCounters]="exitCounters()"
-          [liveCounters]="exitLive()"
-          [prevStepStatus]="entryOverallStatus()" />
-      </div>
+          <app-order-step
+            stepType="exit"
+            [calledOrder]="calledOrder()"
+            [activeOrder]="exitOrder()"
+            [orderCounters]="exitCounters()"
+            [liveCounters]="exitLive()"
+            [prevStepStatus]="entryOverallStatus()" />
+        </div>
+      }
     </main>
   } @else {
     <div class="loading">Caricamento linee...</div>

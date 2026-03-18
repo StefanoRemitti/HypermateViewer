@@ -54,6 +54,8 @@ export class FiringDashboardComponent implements OnInit {
   private prevC1: SubPhaseState = { status: 'grey', code: '' };
   private prevStatesLoaded = false;
 
+  loading              = signal<boolean>(true);
+
   lines                = signal<LineInfo[]>([]);
   selectedLine         = signal<LineInfo | null>(null);
   lastUpdated          = signal<Date | null>(null);
@@ -99,6 +101,7 @@ export class FiringDashboardComponent implements OnInit {
 
   selectLine(line: LineInfo): void {
     this.selectedLine.set(line);
+    this.loading.set(true);
     this.calledOrder.set(null);
     this.entryOrder.set(null);
     this.exitOrder.set(null);
@@ -144,6 +147,7 @@ export class FiringDashboardComponent implements OnInit {
       this.exitOrder.set(exit);
       this.countersActivation.set(activation);
       this.lastUpdated.set(new Date());
+      this.loading.set(false);
       this.checkAndLogStateChanges(called, entry, exit, activation);
       // After step data arrives, immediately trigger counter refresh
       this.counterRefreshTrigger$.next();
