@@ -44,53 +44,69 @@
 .status-label {
   font-size: 1rem;
   font-weight: 700;
+  margin-bottom: 0.5rem;
 
   &.green  { color: var(--color-green); }
   &.yellow { color: var(--color-yellow); }
   &.grey   { color: var(--color-grey); }
 }
 
-.order-info {
+/* Sub-phases checklist */
+.subphases {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
   margin-top: 0.25rem;
 }
 
-.order-row {
+.subphase-row {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  &.small {
-    font-size: 0.875rem;
-  }
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
 }
 
-.order-icon {
-  font-size: 1rem;
+.subphase-checkbox {
+  font-size: 1.1rem;
   flex-shrink: 0;
+  line-height: 1.4;
+
+  &.green  { color: var(--color-green); }
+  &.yellow { color: var(--color-yellow); }
+  &.grey   { color: var(--color-grey); }
 }
 
-.order-code {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: monospace;
+.subphase-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
 }
 
-.order-time {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  font-family: monospace;
-}
-
-.label {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-}
-
-.value {
+.subphase-label {
+  font-size: 0.8rem;
   font-weight: 600;
+  color: var(--color-text);
+}
+
+.subphase-code {
+  font-size: 0.9rem;
+  font-weight: 700;
   font-family: monospace;
+  color: var(--color-text);
+}
+
+.subphase-time {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+
+.subphase-placeholder {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-style: italic;
 }

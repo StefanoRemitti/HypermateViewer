@@ -6,6 +6,7 @@ import { LineInfo } from '../models/line-info.model';
 import { CalledOrder } from '../models/called-order.model';
 import { ActiveOrder } from '../models/active-order.model';
 import { Counter } from '../models/counter.model';
+import { CountersActivation } from '../models/counters-activation.model';
 
 @Injectable({ providedIn: 'root' })
 export class FiringService {
@@ -22,6 +23,10 @@ export class FiringService {
 
   getActiveOrder(line: string, machine: 'entry' | 'exit'): Observable<ActiveOrder> {
     return this.http.get<ActiveOrder>(`${this.baseUrl}/${line}/active-order/${machine}`);
+  }
+
+  getCountersActivation(line: string): Observable<CountersActivation> {
+    return this.http.get<CountersActivation>(`${this.baseUrl}/${line}/counters-activation`);
   }
 
   getCounters(line: string, moErpCode: string): Observable<Counter[]> {

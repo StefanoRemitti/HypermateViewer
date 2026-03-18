@@ -50,6 +50,17 @@ public class FiringController : ControllerBase
         return result is null ? NoContent() : Ok(result);
     }
 
+    /// <summary>Returns the counters activation event for the given line.</summary>
+    [HttpGet("{line}/counters-activation")]
+    public async Task<ActionResult<CountersActivationResult>> GetCountersActivation(string line)
+    {
+        if (!IsValidLine(line))
+            return BadRequest($"Unknown line: {line}");
+
+        var result = await _firingService.GetCountersActivationAsync(line);
+        return result is null ? NoContent() : Ok(result);
+    }
+
     /// <summary>Returns overall counters for the given line and order code.</summary>
     [HttpGet("{line}/counters")]
     public async Task<ActionResult<IEnumerable<CounterResult>>> GetCounters(

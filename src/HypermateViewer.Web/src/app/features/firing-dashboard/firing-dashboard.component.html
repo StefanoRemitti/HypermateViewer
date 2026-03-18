@@ -19,6 +19,7 @@
           🔄 {{ lastUpdated() | date:'HH:mm:ss' }}
         </span>
       }
+      <a class="nav-link" routerLink="/logs">📋 Storico</a>
     </div>
   </header>
 
@@ -27,19 +28,19 @@
       <div class="steps-grid">
         <app-order-step
           stepType="called"
-          [status]="calledOrder() ? 'green' : 'grey'"
           [calledOrder]="calledOrder()" />
 
         <app-order-step
           stepType="entry"
-          [status]="entryStatus()"
+          [calledOrder]="calledOrder()"
           [activeOrder]="entryOrder()"
+          [countersActivation]="countersActivation()"
           [orderCounters]="entryCounters()"
           [liveCounters]="entryLive()" />
 
         <app-order-step
           stepType="exit"
-          [status]="exitStatus()"
+          [calledOrder]="calledOrder()"
           [activeOrder]="exitOrder()"
           [orderCounters]="exitCounters()"
           [liveCounters]="exitLive()" />
