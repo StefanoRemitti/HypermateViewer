@@ -113,11 +113,18 @@ public class FiringService : IFiringService
 
     public async Task<CountersActivationResult?> GetCountersActivationAsync(string line)
     {
+        // The double space between 'ID=%' and 'MachineName' is intentional —
+        // it matches the actual message format produced by the PLC firmware.
         const string sql = """
             SELECT TOP 1
                 LEFT(RTRIM(CONVERT(DATETIMEOFFSET, EventTime)), 22) AS EventTime,
-                RTRIM(SUBSTRING(Message, CHARINDEX('ErpCode ', Message) + 8,
-                    CHARINDEX('-', Message, CHARINDEX('ErpCode ', Message)) - (CHARINDEX('ErpCode ', Message) + 8))) AS ErpCode
+                CASE
+                    WHEN CHARINDEX('ErpCode ', Message) > 0
+                     AND CHARINDEX('-', Message, CHARINDEX('ErpCode ', Message)) > CHARINDEX('ErpCode ', Message) + 8
+                    THEN RTRIM(SUBSTRING(Message, CHARINDEX('ErpCode ', Message) + 8,
+                             CHARINDEX('-', Message, CHARINDEX('ErpCode ', Message)) - (CHARINDEX('ErpCode ', Message) + 8)))
+                    ELSE ''
+                END AS ErpCode
             FROM [TrackingLog].[dbo].[PrimeLogs]
             WHERE EventTime >= DATEADD(HOUR, -48, SYSDATETIME())
               AND ServiceName = 'Prime.LinesManagement.' + @line

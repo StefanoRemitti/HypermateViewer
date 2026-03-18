@@ -213,7 +213,7 @@ export class FiringDashboardComponent implements OnInit {
       newState:   this.stateLabel(curr.status),
       oldErpCode: prev.code,
       newErpCode: curr.code
-    }).pipe(catchError(() => of(null))).subscribe();
+    }).pipe(catchError(err => { console.error('Log insertion failed:', err); return of(null); })).subscribe();
   }
 
   private computeMatchStatus(

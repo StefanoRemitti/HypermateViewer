@@ -62,7 +62,11 @@ export class LogsPageComponent implements OnInit {
 
     this.logsService.getLogs(filter).subscribe({
       next:  logs  => { this.logs.set(logs); this.loading.set(false); },
-      error: _err  => { this.error.set('Errore nel caricamento dei log'); this.loading.set(false); }
+      error: err   => {
+        const detail = err?.message ?? 'Errore sconosciuto';
+        this.error.set(`Errore nel caricamento dei log: ${detail}`);
+        this.loading.set(false);
+      }
     });
   }
 
