@@ -25,7 +25,7 @@ import { LineSelectorComponent } from './components/line-selector/line-selector.
 import { OrderStepComponent } from './components/order-step/order-step.component';
 
 const STATUS_POLL_MS  = 5_000;
-const COUNTER_POLL_MS = 10_000;
+const COUNTER_POLL_MS = 15_000;
 
 interface SubPhaseState {
   status: StepStatus;
@@ -112,22 +112,19 @@ export class FiringDashboardComponent implements OnInit {
   }
 
   private startPolling(): void {
-    // Status poll: pauses when tab is hidden; triggers immediately if data is
-    // stale (>60 s) when the tab regains focus; otherwise resumes at normal cadence.
-    const statusTick$ = fromEvent(document, 'visibilitychange').pipe(
-      startWith(null),
-      map(() => !document.hidden),
-      switchMap(isVisible => {
-        if (!isVisible) return EMPTY;
-        const last  = this.lastUpdated();
-        const stale = !last || Date.now() - last.getTime() >= 60_000;
-        return stale
-          ? merge(of(undefined), interval(STATUS_POLL_MS))
-          : interval(STATUS_POLL_MS);
-      })
-    );
+    // Emits immediately on every tab focus, then at the given interval.
+    // Pauses entirely (EMPTY) while the tab is hidden.
+    const visibleTick = (ms: number) =>
+      fromEvent(document, 'visibilitychange').pipe(
+        startWith(null),
+        map(() => !document.hidden),
+        switchMap(visible => visible
+          ? interval(ms).pipe(startWith(0))
+          : EMPTY
+        )
+      );
 
-    merge(this.refreshTrigger$, statusTick$).pipe(
+    merge(this.refreshTrigger$, visibleTick(STATUS_POLL_MS)).pipe(
       switchMap(() => {
         const line = this.selectedLine();
         if (!line) return of(null);
@@ -152,14 +149,8 @@ export class FiringDashboardComponent implements OnInit {
       this.counterRefreshTrigger$.next();
     });
 
-    // Counter poll: also paused when tab is hidden (no immediate refresh needed).
-    const counterTick$ = fromEvent(document, 'visibilitychange').pipe(
-      startWith(null),
-      map(() => !document.hidden),
-      switchMap(isVisible => isVisible ? interval(COUNTER_POLL_MS) : EMPTY)
-    );
-
-    merge(this.counterRefreshTrigger$, counterTick$).pipe(
+    // Counter poll: pauses when tab is hidden; fetches immediately on tab focus.
+    merge(this.counterRefreshTrigger$, visibleTick(COUNTER_POLL_MS)).pipe(
       switchMap(() => {
         const line   = this.selectedLine();
         const called = this.calledOrder();
