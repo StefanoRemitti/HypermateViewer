@@ -1,25 +1,35 @@
-<div class="step-card" [ngClass]="status()">
+<div class="step-card" [ngClass]="overallStatus()">
   <div class="step-header">
     <span class="step-title">{{ stepLabel }}</span>
-    <span class="status-dot" [ngClass]="status()"></span>
+    <span class="status-dot" [ngClass]="overallStatus()"></span>
   </div>
-  <div class="status-label" [ngClass]="status()">{{ statusLabel }}</div>
+  <div class="status-label" [ngClass]="overallStatus()">{{ statusLabel }}</div>
 
-  <div class="order-info">
-    <div class="order-row">
-      <span class="order-icon">📋</span>
-      <span class="order-code">{{ orderCode }}</span>
-    </div>
-    @if (stepType() !== 'called') {
-      <div class="order-row small">
-        <span class="label">NNNN:</span>
-        <span class="value">{{ orderNumber }}</span>
+  <div class="subphases">
+    @for (phase of subPhases(); track phase.label) {
+      <div class="subphase-row">
+        <span class="subphase-checkbox" [ngClass]="phase.status">
+          @switch (phase.status) {
+            @case ('green')  { ☑ }
+            @case ('yellow') { ⬜ }
+            @default         { ◻ }
+          }
+        </span>
+        <div class="subphase-info">
+          <span class="subphase-label">{{ phase.label }}</span>
+          @if (phase.placeholder) {
+            <span class="subphase-placeholder">{{ phase.placeholder }}</span>
+          } @else {
+            @if (phase.orderCode) {
+              <span class="subphase-code">{{ phase.orderCode }}</span>
+            }
+            @if (phase.eventTime) {
+              <span class="subphase-time">{{ phase.eventTime }}</span>
+            }
+          }
+        </div>
       </div>
     }
-    <div class="order-row small">
-      <span class="order-icon">⏱</span>
-      <span class="order-time">{{ eventTime }}</span>
-    </div>
   </div>
 
   @if (stepType() !== 'called') {

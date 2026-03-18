@@ -1,0 +1,90 @@
+<div class="logs-page">
+  <header class="logs-header">
+    <div class="header-brand">
+      <span class="header-icon">📋</span>
+      <span class="header-title">STORICO LOG</span>
+    </div>
+    <a class="nav-link" routerLink="/">🏭 Dashboard</a>
+  </header>
+
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label class="filter-label">Linea</label>
+      <select class="filter-control" [(ngModel)]="filterLine">
+        @for (opt of lineOptions; track opt.id) {
+          <option [value]="opt.id">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Codice Ordine</label>
+      <input class="filter-control" type="text" [(ngModel)]="filterErpCode"
+             placeholder="Es. 1234" />
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Data da</label>
+      <input class="filter-control" type="date" [(ngModel)]="filterDateFrom" />
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Data a</label>
+      <input class="filter-control" type="date" [(ngModel)]="filterDateTo" />
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Stato</label>
+      <select class="filter-control" [(ngModel)]="filterState">
+        @for (opt of stateOptions; track opt.id) {
+          <option [value]="opt.id">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+
+    <button class="search-btn" (click)="search()">🔍 Cerca</button>
+  </div>
+
+  @if (loading()) {
+    <div class="status-msg">Caricamento...</div>
+  } @else if (error()) {
+    <div class="status-msg error">{{ error() }}</div>
+  } @else {
+    <div class="table-wrapper">
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>Data/Ora</th>
+            <th>Linea</th>
+            <th>Macchina</th>
+            <th>Step / Sotto-fase</th>
+            <th>Stato precedente</th>
+            <th>Nuovo stato</th>
+            <th>Codice precedente</th>
+            <th>Nuovo codice</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (logs().length === 0) {
+            <tr>
+              <td colspan="8" class="empty-row">Nessun log trovato</td>
+            </tr>
+          } @else {
+            @for (log of logs(); track $index) {
+              <tr>
+                <td class="mono">{{ log.eventTime | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+                <td>{{ log.line }}</td>
+                <td>{{ log.machine }}</td>
+                <td>{{ log.stepDescription }}</td>
+                <td><span class="state-badge" [class]="stateClass(log.oldState)">{{ log.oldState }}</span></td>
+                <td><span class="state-badge" [class]="stateClass(log.newState)">{{ log.newState }}</span></td>
+                <td class="mono">{{ log.oldErpCode || '—' }}</td>
+                <td class="mono">{{ log.newErpCode || '—' }}</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

@@ -111,6 +111,44 @@ public class FiringService : IFiringService
         };
     }
 
+    public async Task<CountersActivationResult?> GetCountersActivationAsync(string line)
+    {
+        // The double space between 'ID=%' and 'MachineName' is intentional —
+        // it matches the actual message format produced by the PLC firmware.
+        const string sql = """
+            SELECT TOP 1
+                LEFT(RTRIM(CONVERT(DATETIMEOFFSET, EventTime)), 22) AS EventTime,
+                CASE
+                    WHEN CHARINDEX('ErpCode ', Message) > 0
+                     AND CHARINDEX('-', Message, CHARINDEX('ErpCode ', Message)) > CHARINDEX('ErpCode ', Message) + 8
+                    THEN RTRIM(SUBSTRING(Message, CHARINDEX('ErpCode ', Message) + 8,
+                             CHARINDEX('-', Message, CHARINDEX('ErpCode ', Message)) - (CHARINDEX('ErpCode ', Message) + 8)))
+                    ELSE ''
+                END AS ErpCode
+            FROM [TrackingLog].[dbo].[PrimeLogs]
+            WHERE EventTime >= DATEADD(HOUR, -48, SYSDATETIME())
+              AND ServiceName = 'Prime.LinesManagement.' + @line
+              AND Message LIKE 'Command: New Command to Active and Execute: RequestOrderActivation% ID=%  MachineName ' + @line + '.KilnEntry% - WF BorName ' + @line + '%'
+            ORDER BY EventTime DESC;
+            """;
+
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+        await using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@line", line);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync()) return null;
+
+        var erpCode = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+        return new CountersActivationResult
+        {
+            EventTime = reader.GetString(0),
+            ErpCode = erpCode,
+            OrderNumber = ExtractOrderNumber(erpCode, '_')
+        };
+    }
+
     public async Task<IEnumerable<CounterResult>> GetCountersByLineAsync(string line, string moErpCode)
     {
         const string sql = """

@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IFiringService, FiringService>();
+builder.Services.AddScoped<ILogService, LogService>();
 
 builder.Services.AddCors(options =>
 {
