@@ -86,4 +86,37 @@ public class LogService : ILogService
         }
         return results;
     }
+
+    public async Task<LogRecord?> GetLatestLogAsync(string line, string stepDescription)
+    {
+        const string sql = """
+            SELECT TOP 1 [DateId], [EventTime], [Line], [Machine], [StepDescription],
+                         [OldState], [NewState], [OldErpCode], [NewErpCode]
+            FROM [dbo].[Logs]
+            WHERE [Line] = @Line AND [StepDescription] = @StepDescription
+            ORDER BY [EventTime] DESC
+            """;
+
+        await using var conn = new SqlConnection(_connectionString);
+        await conn.OpenAsync();
+        await using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.Add("@Line", System.Data.SqlDbType.NVarChar).Value = line;
+        cmd.Parameters.Add("@StepDescription", System.Data.SqlDbType.NVarChar).Value = stepDescription;
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync()) return null;
+
+        return new LogRecord
+        {
+            DateId          = reader.GetInt32(0),
+            EventTime       = reader.GetDateTime(1),
+            Line            = reader.GetString(2),
+            Machine         = reader.GetString(3),
+            StepDescription = reader.GetString(4),
+            OldState        = reader.GetString(5),
+            NewState        = reader.GetString(6),
+            OldErpCode      = reader.GetString(7),
+            NewErpCode      = reader.GetString(8)
+        };
+    }
 }

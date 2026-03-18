@@ -44,4 +44,18 @@ public class LogsController : ControllerBase
         var results = await _logService.GetLogsAsync(filter);
         return Ok(results);
     }
+
+    /// <summary>Returns the latest log entry for a given line and step description.</summary>
+    [HttpGet("latest")]
+    public async Task<ActionResult<LogRecord?>> GetLatestLog(
+        [FromQuery] string line,
+        [FromQuery] string stepDescription)
+    {
+        if (string.IsNullOrWhiteSpace(line) || string.IsNullOrWhiteSpace(stepDescription))
+            return BadRequest("Both 'line' and 'stepDescription' query parameters are required.");
+
+        var result = await _logService.GetLatestLogAsync(line, stepDescription);
+        if (result == null) return NoContent();
+        return Ok(result);
+    }
 }

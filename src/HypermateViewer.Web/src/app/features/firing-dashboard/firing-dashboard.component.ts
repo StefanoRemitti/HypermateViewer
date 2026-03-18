@@ -9,10 +9,11 @@ import {
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, merge, interval, switchMap, catchError, of, combineLatest } from 'rxjs';
+import { Subject, merge, interval, switchMap, catchError, of, combineLatest, forkJoin } from 'rxjs';
 
 import { FiringService } from '../../core/services/firing.service';
 import { LogsService } from '../../core/services/logs.service';
+import { LogRecord } from '../../core/models/log-record.model';
 import { LineInfo } from '../../core/models/line-info.model';
 import { CalledOrder } from '../../core/models/called-order.model';
 import { ActiveOrder } from '../../core/models/active-order.model';
@@ -51,6 +52,7 @@ export class FiringDashboardComponent implements OnInit {
   private prevB1: SubPhaseState = { status: 'grey', code: '' };
   private prevB2: SubPhaseState = { status: 'grey', code: '' };
   private prevC1: SubPhaseState = { status: 'grey', code: '' };
+  private prevStatesLoaded = false;
 
   lines                = signal<LineInfo[]>([]);
   selectedLine         = signal<LineInfo | null>(null);
@@ -74,7 +76,7 @@ export class FiringDashboardComponent implements OnInit {
       if (lines.length > 0) {
         this.selectedLine.set(lines[0]);
         this.startPolling();
-        this.refreshTrigger$.next();
+        this.loadPreviousStatesAndStart(lines[0].id);
       }
     });
   }
@@ -89,12 +91,8 @@ export class FiringDashboardComponent implements OnInit {
     this.entryLive.set(null);
     this.exitCounters.set(null);
     this.exitLive.set(null);
-    // Reset previous states so line switch doesn't trigger spurious logs
-    this.prevA1 = { status: 'grey', code: '' };
-    this.prevB1 = { status: 'grey', code: '' };
-    this.prevB2 = { status: 'grey', code: '' };
-    this.prevC1 = { status: 'grey', code: '' };
-    this.refreshTrigger$.next();
+    this.prevStatesLoaded = false;
+    this.loadPreviousStatesAndStart(line.id);
   }
 
   private startPolling(): void {
@@ -162,6 +160,8 @@ export class FiringDashboardComponent implements OnInit {
     exit:       ActiveOrder | null,
     activation: CountersActivation | null
   ): void {
+    if (!this.prevStatesLoaded) return;
+
     const line = this.selectedLine();
     if (!line) return;
 
@@ -230,6 +230,50 @@ export class FiringDashboardComponent implements OnInit {
       case 'green':  return 'valido';
       case 'yellow': return 'attesa';
       case 'grey':   return 'nessun dato';
+    }
+  }
+
+  private loadPreviousStatesAndStart(lineId: string): void {
+    const stepDescs = [
+      'Chiamata Ordine - Chiamata ordine Hypermate',
+      'Attivazione Ingresso - Predisposizione ordine Hypermate',
+      'Attivazione Ingresso - Pressione pulsante avvio conteggi',
+      'Attivazione Uscita - Predisposizione ordine Hypermate'
+    ];
+
+    forkJoin(
+      stepDescs.map(desc => this.logsService.getLatestLog(lineId, desc))
+    ).subscribe({
+      next: results => {
+        this.prevA1 = this.logRecordToState(results[0]);
+        this.prevB1 = this.logRecordToState(results[1]);
+        this.prevB2 = this.logRecordToState(results[2]);
+        this.prevC1 = this.logRecordToState(results[3]);
+        this.prevStatesLoaded = true;
+        this.refreshTrigger$.next();
+      },
+      error: () => {
+        // Fall back to grey states so polling can still start
+        this.prevStatesLoaded = true;
+        this.refreshTrigger$.next();
+      }
+    });
+  }
+
+  private logRecordToState(record: LogRecord | null): SubPhaseState {
+    if (!record) return { status: 'grey', code: '' };
+    return {
+      status: this.reverseStateLabel(record.newState),
+      code: record.newErpCode
+    };
+  }
+
+  private reverseStateLabel(state: string): StepStatus {
+    switch (state) {
+      case 'valido':      return 'green';
+      case 'attesa':      return 'yellow';
+      case 'nessun dato': return 'grey';
+      default:            return 'grey';
     }
   }
 
