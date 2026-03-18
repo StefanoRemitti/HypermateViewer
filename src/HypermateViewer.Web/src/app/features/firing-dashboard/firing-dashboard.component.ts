@@ -9,7 +9,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, merge, interval, switchMap, catchError, of, combineLatest, forkJoin } from 'rxjs';
+import { Subject, merge, interval, switchMap, catchError, of, combineLatest, forkJoin, fromEvent, EMPTY, startWith, map } from 'rxjs';
 
 import { FiringService } from '../../core/services/firing.service';
 import { LogsService } from '../../core/services/logs.service';
@@ -68,6 +68,22 @@ export class FiringDashboardComponent implements OnInit {
   exitCounters         = signal<Counter | null>(null);
   exitLive             = signal<Counter | null>(null);
 
+  /** Overall status of entry step (B), used as dependency gate for exit step (C). */
+  entryOverallStatus = computed<StepStatus>(() => {
+    const called     = this.calledOrder();
+    const entry      = this.entryOrder();
+    const activation = this.countersActivation();
+
+    const b1: StepStatus = this.computeMatchStatus(entry?.orderNumber, called?.orderNumber);
+    const b2: StepStatus = b1 === 'green'
+      ? this.computeMatchStatus(activation?.orderNumber, called?.orderNumber)
+      : 'grey';
+
+    if (b1 === 'green' && b2 === 'green') return 'green';
+    if (b1 === 'grey'  && b2 === 'grey')  return 'grey';
+    return 'yellow';
+  });
+
   ngOnInit(): void {
     this.firingService.getLines().pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -96,8 +112,22 @@ export class FiringDashboardComponent implements OnInit {
   }
 
   private startPolling(): void {
-    // Status polling: immediate trigger + every 5s
-    merge(this.refreshTrigger$, interval(STATUS_POLL_MS)).pipe(
+    // Status poll: pauses when tab is hidden; triggers immediately if data is
+    // stale (>60 s) when the tab regains focus; otherwise resumes at normal cadence.
+    const statusTick$ = fromEvent(document, 'visibilitychange').pipe(
+      startWith(null),
+      map(() => !document.hidden),
+      switchMap(isVisible => {
+        if (!isVisible) return EMPTY;
+        const last  = this.lastUpdated();
+        const stale = !last || Date.now() - last.getTime() >= 60_000;
+        return stale
+          ? merge(of(undefined), interval(STATUS_POLL_MS))
+          : interval(STATUS_POLL_MS);
+      })
+    );
+
+    merge(this.refreshTrigger$, statusTick$).pipe(
       switchMap(() => {
         const line = this.selectedLine();
         if (!line) return of(null);
@@ -122,8 +152,14 @@ export class FiringDashboardComponent implements OnInit {
       this.counterRefreshTrigger$.next();
     });
 
-    // Counters polling: triggered after step fetch + every 10s
-    merge(this.counterRefreshTrigger$, interval(COUNTER_POLL_MS)).pipe(
+    // Counter poll: also paused when tab is hidden (no immediate refresh needed).
+    const counterTick$ = fromEvent(document, 'visibilitychange').pipe(
+      startWith(null),
+      map(() => !document.hidden),
+      switchMap(isVisible => isVisible ? interval(COUNTER_POLL_MS) : EMPTY)
+    );
+
+    merge(this.counterRefreshTrigger$, counterTick$).pipe(
       switchMap(() => {
         const line   = this.selectedLine();
         const called = this.calledOrder();
