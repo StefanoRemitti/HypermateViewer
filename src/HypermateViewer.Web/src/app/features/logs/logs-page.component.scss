@@ -2,7 +2,7 @@
   min-height: 100vh;
   background: var(--color-bg);
   display: flex;
-  flex-direction: column;
+  flex-direction: column; 
 }
 
 /* Header */
@@ -10,9 +10,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
+  padding: 0.5rem 1rem;
   background: var(--color-header-bg);
-  border-bottom: 2px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  min-height: 44px;
 }
 
 .header-brand {
@@ -22,27 +23,28 @@
 }
 
 .header-icon {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
 }
 
 .header-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: var(--color-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-brand-orange);
 }
 
 .nav-link {
-  font-size: 0.875rem;
-  color: var(--color-primary);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
   text-decoration: none;
-  padding: 0.3rem 0.75rem;
-  border: 1px solid var(--color-primary);
-  border-radius: 6px;
-  transition: background 0.15s;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
 
   &:hover {
-    background: rgba(59, 130, 246, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-text);
   }
 }
 
@@ -50,9 +52,9 @@
 .filters-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: flex-end;
-  padding: 1rem 1.5rem;
+  padding: 0.6rem 1rem;
   background: var(--color-header-bg);
   border-bottom: 1px solid var(--color-border);
 }
@@ -60,11 +62,11 @@
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 .filter-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -75,10 +77,10 @@
   background: var(--color-card-bg);
   color: var(--color-text);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.875rem;
-  min-width: 160px;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  min-width: 140px;
 
   &:focus {
     outline: none;
@@ -91,12 +93,12 @@
 }
 
 .search-btn {
-  padding: 0.45rem 1.25rem;
+  padding: 0.35rem 1rem;
   background: var(--color-primary);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s;
@@ -108,48 +110,50 @@
 .table-wrapper {
   flex: 1;
   overflow: auto;
-  padding: 1.5rem;
+  padding: 0;
 }
 
 .logs-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 
   th {
     text-align: left;
-    padding: 0.6rem 0.75rem;
-    background: var(--color-header-bg);
+    padding: 0.4rem 0.6rem;
+    background: var(--color-grid-header-bg);
     color: var(--color-text-muted);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 2px solid var(--color-border);
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--color-grid-border);
+    border-right: 1px solid var(--color-grid-border);
     white-space: nowrap;
   }
 
   td {
-    padding: 0.55rem 0.75rem;
-    border-bottom: 1px solid var(--color-border);
+    padding: 0.35rem 0.6rem;
+    border-bottom: 1px solid var(--color-grid-border);
+    border-right: 1px solid var(--color-grid-border);
     color: var(--color-text);
     vertical-align: middle;
   }
 
   tr:hover td {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--color-grid-row-hover);
   }
 }
 
 .mono {
   font-family: monospace;
-  font-size: 0.83rem;
+  font-size: 0.78rem;
 }
 
 .empty-row {
   text-align: center;
   color: var(--color-text-muted);
-  padding: 2rem !important;
+  padding: 1.5rem !important;
   font-style: italic;
 }
 
@@ -157,7 +161,7 @@
   padding: 2rem;
   text-align: center;
   color: var(--color-text-muted);
-  font-size: 1rem;
+  font-size: 0.9rem;
 
   &.error {
     color: #ef5350;
@@ -167,9 +171,9 @@
 /* State badges */
 .state-badge {
   display: inline-block;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.78rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
   font-weight: 600;
 }
 

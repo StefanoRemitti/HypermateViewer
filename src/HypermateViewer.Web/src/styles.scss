@@ -1,17 +1,42 @@
 /* Global CSS custom properties and resets */
 
 :root {
-  --color-bg:         #111317;
-  --color-header-bg:  #1a1d23;
-  --color-card-bg:    #1e2128;
-  --color-border:     #2c3040;
-  --color-text:       #e8ecf0;
-  --color-text-muted: #7a8394;
-  --color-primary:    #3b82f6;
+  /* Hypermate Prime dark theme palette */
+  --color-bg:           #2a2a2a;
+  --color-header-bg:    #333333;
+  --color-card-bg:      #3a3a3a;
+  --color-border:       #4a4a4a;
+  --color-text:         #e0e0e0;
+  --color-text-muted:   #999999;
+  --color-primary:      #3b82f6;
 
+  /* Sidebar */
+  --color-sidebar-bg:   #1e1e1e;
+  --color-sidebar-icon: #888888;
+  --color-sidebar-hover:#3a3a3a;
+
+  /* Toolbar */
+  --color-toolbar-bg:   #333333;
+  --color-toolbar-border: #4a4a4a;
+
+  /* Grid */
+  --color-grid-header-bg:   #3a3a3a;
+  --color-grid-row-bg:      #2a2a2a;
+  --color-grid-row-alt-bg:  #2f2f2f;
+  --color-grid-row-hover:   #3d3d3d;
+  --color-grid-row-selected:#3a4a5a;
+  --color-grid-border:      #404040;
+
+  /* Hypermate brand */
+  --color-brand-orange: #e8873a;
+  --color-brand-white:  #ffffff;
+
+  /* Status colors */
   --color-green:  #4CAF50;
   --color-yellow: #FFC107;
+  --color-red:    #f44336;
   --color-grey:   #9E9E9E;
+  --color-blue:   #2196F3;
 }
 
 *, *::before, *::after {
@@ -25,7 +50,26 @@ html, body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
 }
 
