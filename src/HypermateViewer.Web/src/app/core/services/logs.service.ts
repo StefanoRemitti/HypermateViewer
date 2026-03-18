@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { LogEntry } from '../models/log-entry.model';
 import { LogRecord } from '../models/log-record.model';
@@ -23,5 +24,14 @@ export class LogsService {
     if (filter.dateTo)   params = params.set('dateTo', filter.dateTo);
     if (filter.state)    params = params.set('state', filter.state);
     return this.http.get<LogRecord[]>(this.baseUrl, { params });
+  }
+
+  getLatestLog(line: string, stepDescription: string): Observable<LogRecord | null> {
+    const params = new HttpParams()
+      .set('line', line)
+      .set('stepDescription', stepDescription);
+    return this.http.get<LogRecord>(this.baseUrl + '/latest', { params }).pipe(
+      catchError(() => of(null))
+    );
   }
 }
