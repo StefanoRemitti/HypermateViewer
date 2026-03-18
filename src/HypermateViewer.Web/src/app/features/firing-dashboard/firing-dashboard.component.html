@@ -2,62 +2,6 @@
   <!-- Top header bar -->
   <header class="top-header">
     <div class="header-left">
-      <button class="back-btn" title="Indietro">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-      </button>
-      <span class="page-title">Griglia ordine principale</span>
-    </div>
-    <div class="header-center">
-      <span class="brand-logo">
-        <span class="brand-bracket">‹</span><span class="brand-orange">hyper</span><span class="brand-white">mate</span><span class="brand-bracket">›</span>
-      </span>
-      <div class="header-info">
-        <span class="header-label">Prime</span>
-        <span class="header-datetime">{{ lastUpdated() | date:'dd/MM/yyyy HH:mm:ss' }}</span>
-      </div>
-    </div>
-    <div class="header-right">
-      <button class="header-icon-btn" title="Aiuto">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
-      </button>
-      <button class="header-icon-btn warning" title="Avvertenze">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5.99L19.53 19H4.47L12 5.99M12 2L1 21h22L12 2zm1 14h-2v2h2v-2zm0-6h-2v4h2v-4z"/></svg>
-      </button>
-      <button class="header-icon-btn" title="Utenti">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-      </button>
-      <button class="header-icon-btn" title="Messaggi">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
-      </button>
-      <button class="header-icon-btn" title="Statistiche">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg>
-      </button>
-      <button class="header-icon-btn" title="Cronologia">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
-      </button>
-    </div>
-  </header>
-
-  <!-- Order number display -->
-  @if (calledOrder()) {
-    <div class="order-number-bar">
-      {{ calledOrder()!.orderNumber }}
-    </div>
-  }
-
-  <!-- Production info bar -->
-  <div class="production-bar">
-    Produzione - ({{ lastUpdated() | date:'dd MMMM yyyy HH:mm' }})
-  </div>
-
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <div class="toolbar-left">
-      <div class="search-box">
-        <input type="text" placeholder="Ricerca" class="search-input" />
-        <button class="search-clear-btn" title="Cancella">✕</button>
-      </div>
-
       @if (lines().length > 0 && selectedLine()) {
         <app-line-selector
           [lines]="lines()"
@@ -65,18 +9,23 @@
           (lineSelected)="selectLine($event)" />
       }
     </div>
-    <div class="toolbar-right">
-      <a class="toolbar-action" routerLink="/logs">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
-        Storico
-      </a>
+    <div class="header-center">
+      <!-- Logo placeholder: replace <span class="brand-logo"> with <img> when PNG is available -->
+      <div class="logo-placeholder" title="Logo Hypermate qui">
+        <span class="brand-logo">
+          <span class="brand-bracket">‹</span><span class="brand-orange">hyper</span><span class="brand-white">mate</span><span class="brand-bracket">›</span>
+        </span>
+      </div>
     </div>
-  </div>
-
-  <!-- Group-by hint -->
-  <div class="group-hint">
-    Trascinare un'intestazione di colonna qui per raggruppare in base a tale colonna.
-  </div>
+    <div class="header-right">
+      <a routerLink="/logs" class="header-link" title="Storico Logs">📋 Storico</a>
+      @if (lastUpdated()) {
+        <span class="last-updated">
+          🔄 {{ lastUpdated() | date:'HH:mm:ss' }}
+        </span>
+      }
+    </div>
+  </header>
 
   @if (selectedLine()) {
     <main class="dashboard-content">
@@ -104,23 +53,4 @@
   } @else {
     <div class="loading">Caricamento linee...</div>
   }
-
-  <!-- Warnings panel -->
-  <div class="warnings-panel">
-    <div class="warnings-header">Avvertenze</div>
-    <div class="warnings-content">
-      <table class="warnings-table">
-        <thead>
-          <tr>
-            <th>Ordine</th>
-            <th>Linea</th>
-            <th>Messaggio</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Warning rows will appear here -->
-        </tbody>
-      </table>
-    </div>
-  </div>
 </div>

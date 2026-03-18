@@ -63,5 +63,6 @@ src/HypermateViewer.Web/.angular/
 # IDE
 .vscode/
 .idea/
+.vs/
 *.suo
 *.user
