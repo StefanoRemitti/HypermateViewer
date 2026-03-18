@@ -22,6 +22,8 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+# Exception for Angular feature directory
+!src/HypermateViewer.Web/src/app/features/logs/
 
 # .NET Core
 project.lock.json
