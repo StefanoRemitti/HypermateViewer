@@ -54,9 +54,16 @@ export class FiringDashboardComponent implements OnInit {
   private prevC1: SubPhaseState = { status: 'grey', code: '' };
   private prevStatesLoaded = false;
 
+  // Baseline (one-time heavy query result cached until order or line changes)
+  private readonly entryCountersBaseline = signal<Counter | null>(null);
+  private readonly exitCountersBaseline  = signal<Counter | null>(null);
+  private globalBaselineFetched   = false;
+  private lastBaselineOrderNumber = '';
+
   lines                = signal<LineInfo[]>([]);
   selectedLine         = signal<LineInfo | null>(null);
   lastUpdated          = signal<Date | null>(null);
+  loading              = signal(true);
 
   calledOrder          = signal<CalledOrder | null>(null);
   entryOrder           = signal<ActiveOrder | null>(null);
@@ -99,6 +106,7 @@ export class FiringDashboardComponent implements OnInit {
 
   selectLine(line: LineInfo): void {
     this.selectedLine.set(line);
+    this.loading.set(true);
     this.calledOrder.set(null);
     this.entryOrder.set(null);
     this.exitOrder.set(null);
@@ -107,6 +115,10 @@ export class FiringDashboardComponent implements OnInit {
     this.entryLive.set(null);
     this.exitCounters.set(null);
     this.exitLive.set(null);
+    this.entryCountersBaseline.set(null);
+    this.exitCountersBaseline.set(null);
+    this.globalBaselineFetched = false;
+    this.lastBaselineOrderNumber = '';
     this.prevStatesLoaded = false;
     this.loadPreviousStatesAndStart(line.id);
   }
@@ -144,40 +156,65 @@ export class FiringDashboardComponent implements OnInit {
       this.exitOrder.set(exit);
       this.countersActivation.set(activation);
       this.lastUpdated.set(new Date());
+      this.loading.set(false);
       this.checkAndLogStateChanges(called, entry, exit, activation);
+
+      // Reset baseline when the called order changes
+      const currentOrderNumber = called?.orderNumber ?? '';
+      if (currentOrderNumber !== this.lastBaselineOrderNumber) {
+        this.entryCountersBaseline.set(null);
+        this.exitCountersBaseline.set(null);
+        this.globalBaselineFetched = false;
+        this.lastBaselineOrderNumber = currentOrderNumber;
+      }
+
       // After step data arrives, immediately trigger counter refresh
       this.counterRefreshTrigger$.next();
     });
 
     // Counter poll: pauses when tab is hidden; fetches immediately on tab focus.
+    // On first poll (or after baseline reset): runs the heavy global query once,
+    // then caches the result and uses only the lighter live query on subsequent polls.
     merge(this.counterRefreshTrigger$, visibleTick(COUNTER_POLL_MS)).pipe(
       switchMap(() => {
-        const line   = this.selectedLine();
-        const called = this.calledOrder();
-        const entry  = this.entryOrder();
-        const exit   = this.exitOrder();
+        const line       = this.selectedLine();
+        const called     = this.calledOrder();
+        const activation = this.countersActivation();
         if (!line) return of(null);
 
-        const entryCode  = entry?.orderNumber  ?? '';
-        const exitCode   = exit?.orderNumber   ?? '';
         const calledCode = called?.orderNumber ?? '';
         const startTime  = called?.eventTime   ?? '';
+        const endTime    = activation?.eventTime ?? undefined;
 
-        return combineLatest([
-          this.firingService.getCounters(line.id, entryCode).pipe(catchError(() => of([]))),
-          this.firingService.getLiveCounters(line.id, calledCode, startTime).pipe(catchError(() => of([]))),
-          this.firingService.getCounters(line.id, exitCode).pipe(catchError(() => of([]))),
-          this.firingService.getLiveCounters(line.id, calledCode, startTime).pipe(catchError(() => of([])))
-        ]);
+        if (!this.globalBaselineFetched) {
+          return combineLatest([
+            this.firingService.getCounters(line.id, calledCode, endTime).pipe(catchError(() => of([]))),
+            this.firingService.getLiveCounters(line.id, calledCode, startTime).pipe(catchError(() => of([])))
+          ]).pipe(map(([baseline, live]) => ({ type: 'full' as const, baseline, live })));
+        }
+
+        return this.firingService.getLiveCounters(line.id, calledCode, startTime).pipe(
+          catchError(() => of([])),
+          map(live => ({ type: 'live' as const, live }))
+        );
       }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(result => {
       if (!result) return;
-      const [entryC, entryL, exitC, exitL] = result;
-      this.entryCounters.set(this.findInbound(entryC));
-      this.entryLive.set(this.findInbound(entryL));
-      this.exitCounters.set(this.findOutbound(exitC));
-      this.exitLive.set(this.findOutbound(exitL));
+
+      if (result.type === 'full') {
+        this.entryCountersBaseline.set(this.findInbound(result.baseline));
+        this.exitCountersBaseline.set(this.findOutbound(result.baseline));
+        this.globalBaselineFetched = true;
+        this.entryLive.set(this.findInbound(result.live));
+        this.exitLive.set(this.findOutbound(result.live));
+      } else {
+        this.entryLive.set(this.findInbound(result.live));
+        this.exitLive.set(this.findOutbound(result.live));
+      }
+
+      this.entryCounters.set(this.sumCounters(this.entryCountersBaseline(), this.entryLive()));
+      this.exitCounters.set(this.sumCounters(this.exitCountersBaseline(), this.exitLive()));
     });
   }
 
@@ -310,5 +347,25 @@ export class FiringDashboardComponent implements OnInit {
 
   private findOutbound(counters: Counter[]): Counter | null {
     return counters.find(c => c.machine?.toLowerCase() === 'outbound') ?? null;
+  }
+
+  private sumCounters(baseline: Counter | null, live: Counter | null): Counter | null {
+    if (!baseline && !live) return null;
+    const pieces = (baseline?.pieces ?? 0) + (live?.pieces ?? 0);
+    const m2 = this.sumM2(baseline?.m2 ?? '', live?.m2 ?? '');
+    return {
+      lastPiece: live?.lastPiece ?? baseline?.lastPiece ?? '',
+      machine:   baseline?.machine ?? live?.machine ?? '',
+      pieces,
+      m2
+    };
+  }
+
+  private sumM2(a: string, b: string): string {
+    const parse = (s: string) => parseFloat(s.replace(',', '.')) || 0;
+    const sum = parse(a) + parse(b);
+    if (sum === 0) return '';
+    // toFixed(2) then strip trailing decimal zeros (e.g. '10.50' → '10.5', '10.00' → '10')
+    return sum.toFixed(2).replace(/\.?0+$/, '');
   }
 }

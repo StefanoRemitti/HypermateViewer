@@ -149,9 +149,9 @@ public class FiringService : IFiringService
         };
     }
 
-    public async Task<IEnumerable<CounterResult>> GetCountersByLineAsync(string line, string moErpCode)
+    public async Task<IEnumerable<CounterResult>> GetCountersByLineAsync(string line, string moErpCode, DateTime? endTime = null)
     {
-        const string sql = """
+        const string sqlBase = """
             SELECT
                 LEFT(RTRIM(CONVERT(DATETIMEOFFSET, MAX(p.EventTime))), 19) AS LastPiece,
                 CASE WHEN m.IsInBound = 1 THEN 'Inbound' ELSE 'Outbound' END AS Machine,
@@ -167,11 +167,19 @@ public class FiringService : IFiringService
               AND (m.IsInBound = 1 OR m.IsOutBound = 1)
               AND (@moErpCode = '' OR mo.ErpCode = @moErpCode)
               AND p.StationType = 0
+            """;
+
+        const string sqlSuffix = """
+
             GROUP BY m.PrimeMachineName, p.OperationOrderRowOperationManagementID, m.IsInBound, mo.ErpCode, it.PiecesToSqmFactor
             ORDER BY m.IsInBound DESC;
             """;
 
-        return await ExecuteCountersQueryAsync(sql, line, moErpCode);
+        var sql = endTime.HasValue
+            ? sqlBase + "\n  AND p.EventTime <= @EndTime" + sqlSuffix
+            : sqlBase + sqlSuffix;
+
+        return await ExecuteCountersQueryAsync(sql, line, moErpCode, endTime);
     }
 
     public async Task<IEnumerable<CounterResult>> GetCountersByTimeframeAsync(string line, string moErpCode, DateTime startTime)
@@ -207,13 +215,15 @@ public class FiringService : IFiringService
         return await ReadCountersAsync(cmd);
     }
 
-    private async Task<IEnumerable<CounterResult>> ExecuteCountersQueryAsync(string sql, string line, string moErpCode)
+    private async Task<IEnumerable<CounterResult>> ExecuteCountersQueryAsync(string sql, string line, string moErpCode, DateTime? endTime = null)
     {
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();
         await using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@line", line);
         cmd.Parameters.AddWithValue("@moErpCode", moErpCode ?? string.Empty);
+        if (endTime.HasValue)
+            cmd.Parameters.Add("@EndTime", System.Data.SqlDbType.DateTime2).Value = endTime.Value;
 
         return await ReadCountersAsync(cmd);
     }

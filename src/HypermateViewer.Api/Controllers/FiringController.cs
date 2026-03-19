@@ -65,12 +65,13 @@ public class FiringController : ControllerBase
     [HttpGet("{line}/counters")]
     public async Task<ActionResult<IEnumerable<CounterResult>>> GetCounters(
         string line,
-        [FromQuery] string moErpCode = "")
+        [FromQuery] string moErpCode = "",
+        [FromQuery] DateTime? endTime = null)
     {
         if (!IsValidLine(line))
             return BadRequest($"Unknown line: {line}");
 
-        var results = await _firingService.GetCountersByLineAsync(line, moErpCode);
+        var results = await _firingService.GetCountersByLineAsync(line, moErpCode, endTime);
         return Ok(results);
     }
 
