@@ -64,7 +64,6 @@ export class FiringDashboardComponent implements OnInit {
   lines                = signal<LineInfo[]>([]);
   selectedLine         = signal<LineInfo | null>(null);
   lastUpdated          = signal<Date | null>(null);
-  loading              = signal(true);
 
   calledOrder          = signal<CalledOrder | null>(null);
   entryOrder           = signal<ActiveOrder | null>(null);
