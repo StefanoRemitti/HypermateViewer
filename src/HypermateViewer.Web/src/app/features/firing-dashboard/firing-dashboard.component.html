@@ -28,6 +28,18 @@
   </header>
 
   @if (selectedLine()) {
+<<<<<<< copilot/optimize-counter-polling-database-load
+    @if (loading()) {
+      <main class="dashboard-content loading-overlay">
+        <div class="spinner-container">
+          <div class="spinner"></div>
+          <p class="loading-text">Caricamento dati...</p>
+        </div>
+      </main>
+    } @else {
+      <main class="dashboard-content">
+        <div class="steps-grid">
+=======
     <main class="dashboard-content">
       @if (loading()) {
         <div class="loading-overlay">
@@ -36,6 +48,7 @@
         </div>
       } @else {
         <div class="steps-grid steps-grid--loaded">
+>>>>>>> main
           <app-order-step
             stepType="called"
             [calledOrder]="calledOrder()" />
@@ -56,8 +69,13 @@
             [liveCounters]="exitLive()"
             [prevStepStatus]="entryOverallStatus()" />
         </div>
+<<<<<<< copilot/optimize-counter-polling-database-load
+      </main>
+    }
+=======
       }
     </main>
+>>>>>>> main
   } @else {
     <div class="loading">Caricamento linee...</div>
   }

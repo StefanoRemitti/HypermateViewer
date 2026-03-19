@@ -29,8 +29,11 @@ export class FiringService {
     return this.http.get<CountersActivation>(`${this.baseUrl}/${line}/counters-activation`);
   }
 
-  getCounters(line: string, moErpCode: string): Observable<Counter[]> {
-    const params = new HttpParams().set('moErpCode', moErpCode);
+  getCounters(line: string, moErpCode: string, endTime?: string): Observable<Counter[]> {
+    let params = new HttpParams().set('moErpCode', moErpCode);
+    if (endTime) {
+      params = params.set('endTime', endTime);
+    }
     return this.http.get<Counter[]>(`${this.baseUrl}/${line}/counters`, { params });
   }
 
