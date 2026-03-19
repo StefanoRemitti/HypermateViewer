@@ -59,6 +59,7 @@ export class FiringDashboardComponent implements OnInit {
   private readonly exitCountersBaseline  = signal<Counter | null>(null);
   private globalBaselineFetched   = false;
   private lastBaselineOrderNumber = '';
+  loading              = signal<boolean>(true);
 
   lines                = signal<LineInfo[]>([]);
   selectedLine         = signal<LineInfo | null>(null);
