@@ -20,9 +20,11 @@ import { ActiveOrder } from '../../core/models/active-order.model';
 import { CountersActivation } from '../../core/models/counters-activation.model';
 import { Counter } from '../../core/models/counter.model';
 import { StepStatus } from './components/order-step/order-step.component';
+import { TimelineEvent } from './components/step-timeline/step-timeline.component';
 
 import { LineSelectorComponent } from './components/line-selector/line-selector.component';
 import { OrderStepComponent } from './components/order-step/order-step.component';
+import { StepTimelineComponent } from './components/step-timeline/step-timeline.component';
 
 const STATUS_POLL_MS  = 5_000;
 const COUNTER_POLL_MS = 15_000;
@@ -35,7 +37,7 @@ interface SubPhaseState {
 @Component({
   selector: 'app-firing-dashboard',
   standalone: true,
-  imports: [LineSelectorComponent, OrderStepComponent, DatePipe, RouterLink],
+  imports: [LineSelectorComponent, OrderStepComponent, StepTimelineComponent, DatePipe, RouterLink],
   templateUrl: './firing-dashboard.component.html',
   styleUrl: './firing-dashboard.component.scss'
 })
@@ -54,11 +56,13 @@ export class FiringDashboardComponent implements OnInit {
   private prevC1: SubPhaseState = { status: 'grey', code: '' };
   private prevStatesLoaded = false;
 
-  // Baseline (one-time heavy query result cached until order or line changes)
+  // Separate baseline caches for entry and exit counters
   private readonly entryCountersBaseline = signal<Counter | null>(null);
   private readonly exitCountersBaseline  = signal<Counter | null>(null);
-  private globalBaselineFetched   = false;
-  private lastBaselineOrderNumber = '';
+  private entryBaselineFetched   = false;
+  private exitBaselineFetched    = false;
+  private lastEntryBaselineCode  = '';
+  private lastExitBaselineCode   = '';
   loading              = signal<boolean>(true);
 
   lines                = signal<LineInfo[]>([]);
@@ -75,20 +79,62 @@ export class FiringDashboardComponent implements OnInit {
   exitCounters         = signal<Counter | null>(null);
   exitLive             = signal<Counter | null>(null);
 
-  /** Overall status of entry step (B), used as dependency gate for exit step (C). */
-  entryOverallStatus = computed<StepStatus>(() => {
+  /** Order code used to filter entry counters (= countersActivation.orderNumber). */
+  entryCounterCode = computed(() => this.countersActivation()?.orderNumber ?? '');
+
+  /** Order code used to filter exit counters (= exitOrder.orderNumber). */
+  exitCounterCode = computed(() => this.exitOrder()?.orderNumber ?? '');
+
+  /** Timeline events for the current called order (recomputed whenever signals change). */
+  timelineEvents = computed<TimelineEvent[]>(() => {
     const called     = this.calledOrder();
     const entry      = this.entryOrder();
     const activation = this.countersActivation();
+    const exit       = this.exitOrder();
 
-    const b1: StepStatus = this.computeMatchStatus(entry?.orderNumber, called?.orderNumber);
-    const b2: StepStatus = b1 === 'green'
-      ? this.computeMatchStatus(activation?.orderNumber, called?.orderNumber)
-      : 'grey';
+    if (!called) return [];
+    const calledNum = called.orderNumber;
+    const events: TimelineEvent[] = [];
 
-    if (b1 === 'green' && b2 === 'green') return 'green';
-    if (b1 === 'grey'  && b2 === 'grey')  return 'grey';
-    return 'yellow';
+    // A1 – Chiamata Ordine Hypermate (always shown for current order)
+    events.push({
+      stepId:    'A1',
+      label:     'Chiamata Ordine',
+      orderCode: called.erpCode,
+      timestamp: called.eventTime
+    });
+
+    // B1 – Ordine Hypermate Pronto (only if aligned with called order)
+    if (entry && entry.orderNumber === calledNum) {
+      events.push({
+        stepId:    'B1',
+        label:     'Ordine Pronto',
+        orderCode: entry.codiceOrdine,
+        timestamp: entry.eventTime
+      });
+    }
+
+    // B2 – Avvio Conteggi Hypermate (only if aligned with called order)
+    if (activation && activation.orderNumber === calledNum) {
+      events.push({
+        stepId:    'B2',
+        label:     'Avvio Conteggi',
+        orderCode: activation.erpCode,
+        timestamp: activation.eventTime
+      });
+    }
+
+    // C1 – Attivazione Uscita (only if aligned with called order)
+    if (exit && exit.orderNumber === calledNum) {
+      events.push({
+        stepId:    'C1',
+        label:     'Attivazione Uscita',
+        orderCode: exit.codiceOrdine,
+        timestamp: exit.eventTime
+      });
+    }
+
+    return events;
   });
 
   ngOnInit(): void {
@@ -117,8 +163,10 @@ export class FiringDashboardComponent implements OnInit {
     this.exitLive.set(null);
     this.entryCountersBaseline.set(null);
     this.exitCountersBaseline.set(null);
-    this.globalBaselineFetched = false;
-    this.lastBaselineOrderNumber = '';
+    this.entryBaselineFetched  = false;
+    this.exitBaselineFetched   = false;
+    this.lastEntryBaselineCode = '';
+    this.lastExitBaselineCode  = '';
     this.prevStatesLoaded = false;
     this.loadPreviousStatesAndStart(line.id);
   }
@@ -159,43 +207,83 @@ export class FiringDashboardComponent implements OnInit {
       this.loading.set(false);
       this.checkAndLogStateChanges(called, entry, exit, activation);
 
-      // Reset baseline when the called order changes
-      const currentOrderNumber = called?.orderNumber ?? '';
-      if (currentOrderNumber !== this.lastBaselineOrderNumber) {
+      // Reset entry baseline when countersActivation order changes
+      const entryCode = activation?.orderNumber ?? '';
+      if (entryCode !== this.lastEntryBaselineCode) {
         this.entryCountersBaseline.set(null);
+        this.entryBaselineFetched = false;
+        this.lastEntryBaselineCode = entryCode;
+      }
+
+      // Reset exit baseline when exitOrder order changes
+      const exitCode = exit?.orderNumber ?? '';
+      if (exitCode !== this.lastExitBaselineCode) {
         this.exitCountersBaseline.set(null);
-        this.globalBaselineFetched = false;
-        this.lastBaselineOrderNumber = currentOrderNumber;
+        this.exitBaselineFetched = false;
+        this.lastExitBaselineCode = exitCode;
       }
 
       // After step data arrives, immediately trigger counter refresh
       this.counterRefreshTrigger$.next();
     });
 
-    // Counter poll: pauses when tab is hidden; fetches immediately on tab focus.
-    // On first poll (or after baseline reset): runs the heavy global query once,
-    // then caches the result and uses only the lighter live query on subsequent polls.
+    // Counter poll: uses countersActivation.orderNumber for entry and exitOrder.orderNumber for exit.
+    // Baseline (heavy query) is fetched once per order; live (light query) is fetched every cycle.
     merge(this.counterRefreshTrigger$, visibleTick(COUNTER_POLL_MS)).pipe(
       switchMap(() => {
         const line       = this.selectedLine();
-        const called     = this.calledOrder();
         const activation = this.countersActivation();
+        const exit       = this.exitOrder();
         if (!line) return of(null);
 
-        const calledCode = called?.orderNumber ?? '';
-        const startTime  = called?.eventTime   ?? '';
-        const endTime    = activation?.eventTime ?? undefined;
+        const entryCode  = activation?.orderNumber ?? '';
+        const entryStart = activation?.eventTime   ?? '';
+        const entryEnd   = activation?.eventTime   ?? undefined;
 
-        if (!this.globalBaselineFetched) {
-          return combineLatest([
-            this.firingService.getCounters(line.id, calledCode, endTime).pipe(catchError(() => of([]))),
-            this.firingService.getLiveCounters(line.id, calledCode, startTime).pipe(catchError(() => of([])))
-          ]).pipe(map(([baseline, live]) => ({ type: 'full' as const, baseline, live })));
+        const exitCode   = exit?.orderNumber ?? '';
+        const exitStart  = exit?.eventTime   ?? '';
+        const exitEnd    = exit?.eventTime   ?? undefined;
+
+        const needEntryBaseline = !this.entryBaselineFetched;
+        const needExitBaseline  = !this.exitBaselineFetched;
+
+        if (needEntryBaseline || needExitBaseline) {
+          const entryBaseline$ = needEntryBaseline && entryCode
+            ? this.firingService.getCounters(line.id, entryCode, entryEnd).pipe(catchError(() => of([])))
+            : of(null);
+          const exitBaseline$ = needExitBaseline && exitCode
+            ? this.firingService.getCounters(line.id, exitCode, exitEnd).pipe(catchError(() => of([])))
+            : of(null);
+          const entryLive$ = entryCode
+            ? this.firingService.getLiveCounters(line.id, entryCode, entryStart).pipe(catchError(() => of([])))
+            : of([]);
+          const exitLive$ = exitCode
+            ? this.firingService.getLiveCounters(line.id, exitCode, exitStart).pipe(catchError(() => of([])))
+            : of([]);
+
+          return combineLatest([entryBaseline$, exitBaseline$, entryLive$, exitLive$]).pipe(
+            map(([entryB, exitB, entryL, exitL]) => ({
+              type:       'full' as const,
+              entryBaseline: entryB,
+              exitBaseline:  exitB,
+              entryLive:  entryL,
+              exitLive:   exitL,
+              fetchedEntryBaseline: needEntryBaseline,
+              fetchedExitBaseline:  needExitBaseline
+            }))
+          );
         }
 
-        return this.firingService.getLiveCounters(line.id, calledCode, startTime).pipe(
-          catchError(() => of([])),
-          map(live => ({ type: 'live' as const, live }))
+        // Subsequent polls: only light live queries
+        const entryLive$ = entryCode
+          ? this.firingService.getLiveCounters(line.id, entryCode, entryStart).pipe(catchError(() => of([])))
+          : of([]);
+        const exitLive$ = exitCode
+          ? this.firingService.getLiveCounters(line.id, exitCode, exitStart).pipe(catchError(() => of([])))
+          : of([]);
+
+        return combineLatest([entryLive$, exitLive$]).pipe(
+          map(([entryL, exitL]) => ({ type: 'live' as const, entryLive: entryL, exitLive: exitL }))
         );
       }),
       takeUntilDestroyed(this.destroyRef)
@@ -203,14 +291,19 @@ export class FiringDashboardComponent implements OnInit {
       if (!result) return;
 
       if (result.type === 'full') {
-        this.entryCountersBaseline.set(this.findInbound(result.baseline));
-        this.exitCountersBaseline.set(this.findOutbound(result.baseline));
-        this.globalBaselineFetched = true;
-        this.entryLive.set(this.findInbound(result.live));
-        this.exitLive.set(this.findOutbound(result.live));
+        if (result.fetchedEntryBaseline && result.entryBaseline !== null) {
+          this.entryCountersBaseline.set(this.findInbound(result.entryBaseline));
+          this.entryBaselineFetched = true;
+        }
+        if (result.fetchedExitBaseline && result.exitBaseline !== null) {
+          this.exitCountersBaseline.set(this.findOutbound(result.exitBaseline));
+          this.exitBaselineFetched = true;
+        }
+        this.entryLive.set(this.findInbound(result.entryLive));
+        this.exitLive.set(this.findOutbound(result.exitLive));
       } else {
-        this.entryLive.set(this.findInbound(result.live));
-        this.exitLive.set(this.findOutbound(result.live));
+        this.entryLive.set(this.findInbound(result.entryLive));
+        this.exitLive.set(this.findOutbound(result.exitLive));
       }
 
       this.entryCounters.set(this.sumCounters(this.entryCountersBaseline(), this.entryLive()));
@@ -341,11 +434,13 @@ export class FiringDashboardComponent implements OnInit {
     }
   }
 
-  private findInbound(counters: Counter[]): Counter | null {
+  private findInbound(counters: Counter[] | null): Counter | null {
+    if (!counters) return null;
     return counters.find(c => c.machine?.toLowerCase() === 'inbound') ?? null;
   }
 
-  private findOutbound(counters: Counter[]): Counter | null {
+  private findOutbound(counters: Counter[] | null): Counter | null {
+    if (!counters) return null;
     return counters.find(c => c.machine?.toLowerCase() === 'outbound') ?? null;
   }
 

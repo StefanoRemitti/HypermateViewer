@@ -45,7 +45,8 @@
             [activeOrder]="entryOrder()"
             [countersActivation]="countersActivation()"
             [orderCounters]="entryCounters()"
-            [liveCounters]="entryLive()" />
+            [liveCounters]="entryLive()"
+            [countersOrderCode]="entryCounterCode()" />
 
           <app-order-step
             stepType="exit"
@@ -53,7 +54,12 @@
             [activeOrder]="exitOrder()"
             [orderCounters]="exitCounters()"
             [liveCounters]="exitLive()"
-            [prevStepStatus]="entryOverallStatus()" />
+            [countersOrderCode]="exitCounterCode()" />
+        </div>
+
+        <!-- Visual timeline at bottom -->
+        <div class="timeline-section">
+          <app-step-timeline [events]="timelineEvents()" />
         </div>
       </main>
     }
