@@ -207,17 +207,19 @@ export class FiringDashboardComponent implements OnInit {
       this.loading.set(false);
       this.checkAndLogStateChanges(called, entry, exit, activation);
 
-      // Reset entry baseline when countersActivation order changes
-      const entryCode = activation?.orderNumber ?? '';
-      if (entryCode !== this.lastEntryBaselineCode) {
+      // Reset entry baseline only when countersActivation has a real order code that differs
+      // from the last known code. Transient nulls (API error → null) are ignored so the
+      // cached baseline survives temporary fetch failures.
+      const entryCode = activation?.orderNumber;
+      if (entryCode && entryCode !== this.lastEntryBaselineCode) {
         this.entryCountersBaseline.set(null);
         this.entryBaselineFetched = false;
         this.lastEntryBaselineCode = entryCode;
       }
 
-      // Reset exit baseline when exitOrder order changes
-      const exitCode = exit?.orderNumber ?? '';
-      if (exitCode !== this.lastExitBaselineCode) {
+      // Reset exit baseline only when exitOrder has a real order code that differs.
+      const exitCode = exit?.orderNumber;
+      if (exitCode && exitCode !== this.lastExitBaselineCode) {
         this.exitCountersBaseline.set(null);
         this.exitBaselineFetched = false;
         this.lastExitBaselineCode = exitCode;

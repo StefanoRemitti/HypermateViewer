@@ -70,7 +70,8 @@ export class OrderStepComponent {
 
     if (stepType === 'entry') {
       const b1Status = this.matchStatus(active?.orderNumber, called?.orderNumber);
-      const b1IsPrev = b1Status === 'yellow' && !!active?.orderNumber;
+      // Only flag as "previous order" when there IS a reference called order to compare against
+      const b1IsPrev = b1Status === 'yellow' && !!active?.orderNumber && !!called?.orderNumber;
       const b1: SubPhase = {
         label:          b1IsPrev ? 'Attesa scaricamento da Box' : 'Ordine Hypermate Pronto',
         status:         b1Status,
@@ -80,7 +81,7 @@ export class OrderStepComponent {
       };
 
       const b2Status = this.matchStatus(activation?.orderNumber, called?.orderNumber);
-      const b2IsPrev = b2Status === 'yellow' && !!activation?.orderNumber;
+      const b2IsPrev = b2Status === 'yellow' && !!activation?.orderNumber && !!called?.orderNumber;
       const b2: SubPhase = {
         label:          b2IsPrev ? 'Attesa pressione pulsante in ingresso' : 'Avvio Conteggi Hypermate',
         status:         b2Status,
@@ -93,7 +94,7 @@ export class OrderStepComponent {
 
     // exit — C1 always shown regardless of entry step status
     const c1Status = this.matchStatus(active?.orderNumber, called?.orderNumber);
-    const c1IsPrev = c1Status === 'yellow' && !!active?.orderNumber;
+    const c1IsPrev = c1Status === 'yellow' && !!active?.orderNumber && !!called?.orderNumber;
     return [
       {
         label:          c1IsPrev ? 'Attesa cambio prodotto in uscita' : 'Avvio Conteggi Hypermate',
