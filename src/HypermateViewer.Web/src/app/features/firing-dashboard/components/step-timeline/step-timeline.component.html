@@ -1,0 +1,38 @@
+<div class="timeline-wrapper">
+  <h3 class="timeline-title">📅 Timeline Ordine Corrente</h3>
+
+  @if (sortedEvents().length === 0) {
+    <div class="timeline-empty">
+      Nessun step validato per l'ordine corrente. In attesa di dati...
+    </div>
+  } @else {
+    <div class="timeline-track-container">
+      <!-- Horizontal baseline -->
+      <div class="timeline-track"></div>
+
+      <!-- Event markers -->
+      @for (event of sortedEvents(); track event.stepId) {
+        <div
+          class="timeline-event"
+          [ngClass]="stepColor(event.stepId)"
+          [style.left.%]="positionOf(event)">
+          <div class="event-dot"></div>
+          <div class="event-label-box">
+            <span class="event-step-id">{{ event.stepId }}</span>
+            <span class="event-label">{{ event.label }}</span>
+            <span class="event-code">{{ event.orderCode }}</span>
+            <span class="event-time">{{ formatTime(event.timestamp) }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Legend -->
+    <div class="timeline-legend">
+      <span class="legend-item orange">A1 – Chiamata Ordine</span>
+      <span class="legend-item blue">B1 – Ordine Pronto</span>
+      <span class="legend-item green">B2 – Avvio Conteggi</span>
+      <span class="legend-item purple">C1 – Attivazione Uscita</span>
+    </div>
+  }
+</div>

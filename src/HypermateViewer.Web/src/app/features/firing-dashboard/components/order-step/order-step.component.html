@@ -1,4 +1,4 @@
-<div class="step-card" [ngClass]="overallStatus()">
+<div class="step-card" [ngClass]="[overallStatus(), isPending() ? 'pending' : '']">
   <div class="step-header">
     <span class="step-title">{{ stepLabel }}</span>
     <span class="status-dot" [ngClass]="overallStatus()"></span>
@@ -20,8 +20,11 @@
           @if (phase.placeholder) {
             <span class="subphase-placeholder">{{ phase.placeholder }}</span>
           } @else {
+            @if (phase.isPreviousOrder) {
+              <span class="prev-order-badge">⚠ Ordine precedente</span>
+            }
             @if (phase.orderCode) {
-              <span class="subphase-code">{{ phase.orderCode }}</span>
+              <span class="subphase-code" [class.prev-order-code]="phase.isPreviousOrder">{{ phase.orderCode }}</span>
             }
             @if (phase.eventTime) {
               <span class="subphase-time">{{ phase.eventTime }}</span>
@@ -33,6 +36,11 @@
   </div>
 
   @if (stepType() !== 'called') {
+    @if (countersIsPreviousOrder()) {
+      <div class="counters-order-notice">
+        📦 Conteggi riferiti all'ordine precedente: <strong>{{ countersOrderCode() }}</strong>
+      </div>
+    }
     <app-counters-display label="Conteggi Globali" [counter]="orderCounters()" />
     <app-counters-display
       label="Conteggi Parziali"
